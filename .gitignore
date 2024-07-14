@@ -3,3 +3,4 @@ templates/
 app.py
 mix
 nohup.out
+install.txt
