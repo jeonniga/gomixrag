@@ -222,7 +222,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", handler)
-	fmt.Println("서버가 http://localhost:8510 에서 시작되었습니다.")
+	fmt.Println("서버가 http://39.119.91.166:8510 에서 시작되었습니다.")
 	log.Fatal(http.ListenAndServe(":8510", nil))
 }
 
