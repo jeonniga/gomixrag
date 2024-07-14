@@ -100,19 +100,12 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .response-item {
-            cursor: pointer;
-            padding: 5px;
-        }
-        .response-item:hover {
-            background-color: #d3d3d3;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AI Assistant</h1>
-        <form id="promptForm" method="post" action="/" onsubmit="showLoadingModal()">
+        <form id="promptForm" method="post" action="/" onsubmit="handleFormSubmit(event)">
             <textarea name="prompt" placeholder="Enter your prompt here..."></textarea>
             <button type="submit">Submit</button>
         </form>
@@ -122,9 +115,7 @@
             <div class="execution-time">
                 Execution Time: <span id="executionTime"></span> seconds
             </div>
-
         </div>
-
         <div id="example" class="example">
             <h2>Example</h2>
             <p class="response-item">부동산소유권이전등기절차이행급가옥명도.</p>
@@ -136,7 +127,7 @@
             <p class="response-item">중계유선방송사업허가처분무효확인.</p>
             <p class="response-item">음반·비디오물및게임물에관한법률위반.</p>
 
-        </div>        
+        </div>         
     </div>
     <!-- Loading Modal -->
     <div id="loadingModal" class="modal">
@@ -146,6 +137,40 @@
         </div>
     </div>
     <script>
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            showLoadingModal();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            // Get the prompt text from the textarea and remove commas and periods
+            const promptText = formData.get('prompt');
+            const cleanedPrompt = promptText.replace(/[,.]/g, '');  // Remove commas and periods
+            
+            formData.set('prompt', cleanedPrompt);  // Set cleaned prompt back into FormData
+
+            try {
+                const response = await fetch("/", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                document.getElementById("completionText").innerHTML = result.completion;
+                document.getElementById("executionTime").innerText = result.execution_time.toFixed(2);
+                document.getElementById("responseSection").style.display = "block";
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                hideLoadingModal();
+            }
+        }
+
         function showLoadingModal() {
             var loadingModal = document.getElementById("loadingModal");
             loadingModal.style.display = "flex";
@@ -156,29 +181,26 @@
             loadingModal.style.display = "none";
         }
 
-        // Hide the loading modal and show the response if there is a response
         document.addEventListener("DOMContentLoaded", function() {
             hideLoadingModal();
-
-            // Example data for completion and execution time (normally this would come from your server)
-            var completion = "{{.Completion}}";
-            var executionTime = "{{.ExecutionTime}}";
-
-            if (completion) {
-                document.getElementById("completionText").innerText = completion;
-                document.getElementById("executionTime").innerText = executionTime;
-                document.getElementById("responseSection").style.display = "block";
-            }
-
-            // Add event listeners to the response items
-            var responseItems = document.getElementsByClassName("response-item");
-            for (var i = 0; i < responseItems.length; i++) {
-                responseItems[i].addEventListener("click", function() {
-                    var textArea = document.querySelector("textarea[name='prompt']");
-                    textArea.value = this.innerText;
-                });
-            }
         });
+
+        document.addEventListener("DOMContentLoaded", function() {
+    // Get all elements with class 'response-item'
+    const responseItems = document.querySelectorAll('.response-item');
+
+    // Add click event listener to each response item
+    responseItems.forEach(item => {
+        item.addEventListener('click', function() {
+            // Get the text content of the clicked item
+            const text = item.textContent.trim();
+
+            // Set the textarea value to the clicked item's text content
+            document.querySelector('textarea[name="prompt"]').value = text;
+        });
+    });
+});
+
 
         document.addEventListener("keydown", function(event) {
             if (event.key === "Escape") {

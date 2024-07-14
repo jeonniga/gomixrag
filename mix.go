@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -146,7 +145,6 @@ func generateResponse(prompt string) (string, float64, error) {
 	ctx := context.Background()
 	key, value := getSimilarValue(prompt)
 
-	// fmt.Println("LLM에 요청하는 내용:", query)
 	fmt.Println("===================================================")
 	fmt.Println("PROMPT:", prompt, "\nKEY:", key, "\nValue:", value)
 	startTime := time.Now()
@@ -184,22 +182,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		data := struct {
-			Prompt        string
-			Completion    string
-			ExecutionTime float64
+			Prompt        string  `json:"prompt"`
+			Completion    string  `json:"completion"`
+			ExecutionTime float64 `json:"execution_time"`
 		}{
 			Prompt:        prompt,
 			Completion:    completion,
 			ExecutionTime: executionTime,
 		}
 
-		tmpl, err := template.ParseFiles("index.html")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		tmpl.Execute(w, data)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(data)
 		return
 	}
 
@@ -229,7 +222,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", handler)
-	fmt.Println("서버가 http://39.119.91.166:8510 에서 시작되었습니다.")
+	fmt.Println("서버가 http://localhost:8510 에서 시작되었습니다.")
 	log.Fatal(http.ListenAndServe(":8510", nil))
 }
 
